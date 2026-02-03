@@ -1,6 +1,6 @@
 package com.checkout.payment.gateway.repository;
 
-import com.checkout.payment.gateway.model.ApiPaymentResponse;
+import com.checkout.payment.gateway.model.Payment;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,12 +15,12 @@ public interface PaymentRepository {
    * Saves a payment
    * @param payment the payment to save
    */
-  void save(ApiPaymentResponse payment);
+  void save(Payment payment);
 
   /**
    * Finds a payment by ID
    * @param id the payment ID
    * @return optional containing the payment if found
    */
-  Optional<ApiPaymentResponse> findById(UUID id);
+  Optional<Payment> findById(UUID id);
 }

@@ -1,6 +1,6 @@
 package com.checkout.payment.gateway.service.validator;
 
-import com.checkout.payment.gateway.model.ApiPaymentRequest;
+import com.checkout.payment.gateway.requests.ApiPaymentRequest;
 
 /**
  * Interface for payment validation strategies

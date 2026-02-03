@@ -1,4 +1,4 @@
-package com.checkout.payment.gateway.model;
+package com.checkout.payment.gateway.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -13,5 +13,5 @@ public class BankPaymentRequest {
 
   private String currency;
   private int amount;
-  private int cvv;
+  private String cvv;
 }

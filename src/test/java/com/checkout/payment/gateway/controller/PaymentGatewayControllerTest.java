@@ -1,11 +1,13 @@
 package com.checkout.payment.gateway.controller;
 
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.enums.PaymentStatus;
-import com.checkout.payment.gateway.model.ApiPaymentResponse;
 import com.checkout.payment.gateway.repository.PaymentRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @SpringBootTest
@@ -28,18 +30,20 @@ class PaymentGatewayControllerTest {
 
   @Test
   void whenPaymentWithIdExistThenCorrectPaymentIsReturned() throws Exception {
-    ApiPaymentResponse payment = new ApiPaymentResponse();
-    payment.setId(UUID.randomUUID());
-    payment.setAmount(10);
-    payment.setCurrency("USD");
-    payment.setStatus(PaymentStatus.AUTHORIZED);
-    payment.setExpiryMonth(12);
-    payment.setExpiryYear(2024);
-    payment.setCardNumberLastFour("4321");
+    UUID paymentId = UUID.randomUUID();
+    Payment payment = Payment.builder()
+        .id(paymentId)
+        .amount(10)
+        .currency("USD")
+        .status(PaymentStatus.AUTHORIZED)
+        .expiryMonth(12)
+        .expiryYear(2024)
+        .cardNumberLastFour("4321")
+        .build();
 
     paymentRepository.save(payment);
 
-    mvc.perform(MockMvcRequestBuilders.get("/payment/" + payment.getId()))
+    mvc.perform(MockMvcRequestBuilders.get("/payment/" + paymentId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value(payment.getStatus().getName()))
         .andExpect(jsonPath("$.card_number_last_four").value(payment.getCardNumberLastFour()))
@@ -68,12 +72,14 @@ class PaymentGatewayControllerTest {
           "cvv": 123
         }
         """;
-
-    UUID paymentId = UUID.randomUUID();
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + paymentId)
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"))
         .andExpect(jsonPath("$.card_number_last_four").value("1111"))
         .andExpect(jsonPath("$.expiry_month").value(12))
@@ -96,10 +102,14 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Declined"))
         .andExpect(jsonPath("$.card_number_last_four").value("1112"))
         .andExpect(jsonPath("$.expiry_month").value(12))
@@ -122,11 +132,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -142,11 +157,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -162,11 +182,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -182,11 +207,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -202,11 +232,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -222,11 +257,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -242,11 +282,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -262,11 +307,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -282,11 +332,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -302,11 +357,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -322,11 +382,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -342,11 +407,16 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.status").value("Rejected"));
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.rejection_reason").exists());
   }
 
   @Test
@@ -362,10 +432,14 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"))
         .andExpect(jsonPath("$.card_number_last_four").value("4445"))
         .andExpect(jsonPath("$.currency").value("EUR"))
@@ -385,10 +459,14 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Authorized"))
         .andExpect(jsonPath("$.card_number_last_four").value("1235"))
         .andExpect(jsonPath("$.id").exists());
@@ -407,10 +485,14 @@ class PaymentGatewayControllerTest {
         }
         """;
 
-    mvc.perform(MockMvcRequestBuilders.put("/payment/" + UUID.randomUUID())
+    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/payment")
             .contentType(MediaType.APPLICATION_JSON)
             .content(paymentRequest))
-        .andExpect(status().isOk())
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mvc.perform(asyncDispatch(mvcResult))
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.status").value("Declined"))
         .andExpect(jsonPath("$.card_number_last_four").value("6782"))
         .andExpect(jsonPath("$.id").exists());

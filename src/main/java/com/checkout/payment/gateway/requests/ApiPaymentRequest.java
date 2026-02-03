@@ -1,4 +1,4 @@
-package com.checkout.payment.gateway.model;
+package com.checkout.payment.gateway.requests;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
@@ -17,7 +17,7 @@ public class ApiPaymentRequest implements Serializable {
   @JsonProperty(required = true, value = "amount")
   private int amount;
   @JsonProperty(required = true, value = "cvv")
-  private int cvv;
+  private String cvv;
 
   @JsonProperty("card_number_last_four")
   public String getCardNumberLastFour() {

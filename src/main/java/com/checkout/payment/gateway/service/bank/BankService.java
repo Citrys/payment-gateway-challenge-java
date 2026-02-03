@@ -1,7 +1,9 @@
 package com.checkout.payment.gateway.service.bank;
 
-import com.checkout.payment.gateway.model.ApiPaymentRequest;
-import com.checkout.payment.gateway.model.BankPaymentResponse;
+import com.checkout.payment.gateway.requests.ApiPaymentRequest;
+import com.checkout.payment.gateway.responces.BankPaymentResponse;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface for bank communication
@@ -11,10 +13,11 @@ import com.checkout.payment.gateway.model.BankPaymentResponse;
 public interface BankService {
 
   /**
-   * Authorizes a payment with the bank
+   * Authorizes a payment with the bank asynchronously
+   * @param paymentId the payment ID (used for idempotency in bank)
    * @param request the payment request
-   * @return bank response
+   * @return CompletableFuture with bank response
    * @throws BankCommunicationException if bank communication fails
    */
-  BankPaymentResponse authorizePayment(ApiPaymentRequest request) throws BankCommunicationException;
+  CompletableFuture<BankPaymentResponse> authorizePayment(UUID paymentId, ApiPaymentRequest request) throws BankCommunicationException;
 }

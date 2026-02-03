@@ -1,4 +1,4 @@
-package com.checkout.payment.gateway.model;
+package com.checkout.payment.gateway.responces;
 
 import com.checkout.payment.gateway.enums.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,4 +17,6 @@ public class ApiPaymentResponse {
   private int expiryYear;
   private String currency;
   private int amount;
+  @JsonProperty("rejection_reason")
+  private String rejectionReason;
 }

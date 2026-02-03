@@ -1,22 +1,27 @@
 package com.checkout.payment.gateway.repository;
 
-import com.checkout.payment.gateway.model.ApiPaymentResponse;
+import com.checkout.payment.gateway.model.Payment;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
+/**
+ * In-memory implementation of PaymentRepository
+ * Stores Payment domain objects in a HashMap
+ */
 @Repository
-public class PaymentsRepository {
+public class PaymentsRepository implements PaymentRepository {
 
-  private final HashMap<UUID, ApiPaymentResponse> payments = new HashMap<>();
+  private final HashMap<UUID, Payment> payments = new HashMap<>();
 
-  public void add(ApiPaymentResponse payment) {
+  @Override
+  public void save(Payment payment) {
     payments.put(payment.getId(), payment);
   }
 
-  public Optional<ApiPaymentResponse> get(UUID id) {
+  @Override
+  public Optional<Payment> findById(UUID id) {
     return Optional.ofNullable(payments.get(id));
   }
-
 }

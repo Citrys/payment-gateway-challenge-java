@@ -1,13 +1,20 @@
 package com.checkout.payment.gateway.service.bank;
 
-import com.checkout.payment.gateway.model.ApiPaymentRequest;
-import com.checkout.payment.gateway.model.BankPaymentRequest;
-import com.checkout.payment.gateway.model.BankPaymentResponse;
+import com.checkout.payment.gateway.requests.ApiPaymentRequest;
+import com.checkout.payment.gateway.requests.BankPaymentRequest;
+import com.checkout.payment.gateway.responces.BankPaymentResponse;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
@@ -34,6 +41,7 @@ public class RestTemplateBankService implements BankService {
   }
 
   @Override
+  @Async("bankServiceExecutor")
   @Retryable(
       retryFor = {RestClientException.class, ResourceAccessException.class},
       maxAttemptsExpression = "#{${payment.retry.max-attempts}}",
@@ -42,23 +50,30 @@ public class RestTemplateBankService implements BankService {
               delayExpression = "#{${payment.retry.initial-delay}}",
               maxDelayExpression = "#{${payment.retry.max-delay}}",
               multiplierExpression = "#{${payment.retry.multiplier}}"))
-  public BankPaymentResponse authorizePayment(ApiPaymentRequest request)
+  public CompletableFuture<BankPaymentResponse> authorizePayment(UUID paymentId, ApiPaymentRequest request)
       throws BankCommunicationException {
-    LOG.debug("Initiating bank authorization request");
 
     try {
       BankPaymentRequest bankRequest = createBankRequest(request);
 
-      BankPaymentResponse response =
-          restTemplate.postForObject(
-              bankUrl + "/payments", bankRequest, BankPaymentResponse.class);
+      // Add payment ID in headers for bank idempotency check
+      HttpHeaders headers = new HttpHeaders();
+      headers.set("Idempotency-Key", paymentId.toString());
+      HttpEntity<BankPaymentRequest> entity = new HttpEntity<>(bankRequest, headers);
 
+      ResponseEntity<BankPaymentResponse> responseEntity =
+          restTemplate.exchange(
+              bankUrl + "/payments",
+              HttpMethod.POST,
+              entity,
+              BankPaymentResponse.class);
+
+      BankPaymentResponse response = responseEntity.getBody();
       if (response == null) {
-        LOG.error("Null response received from bank");
         throw new BankCommunicationException("Bank returned null response");
       }
 
-      return response;
+      return CompletableFuture.completedFuture(response);
     } catch (RestClientException e) {
       LOG.error("Bank communication failed: {}", e.getClass().getSimpleName());
       throw new BankCommunicationException("Failed to communicate with bank", e);
