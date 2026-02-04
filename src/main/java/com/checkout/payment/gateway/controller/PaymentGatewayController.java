@@ -67,7 +67,7 @@ public class PaymentGatewayController {
   public ResponseEntity<ApiPaymentResponse> getPostPaymentEventById(@PathVariable UUID id) {
     ApiPaymentResponse response = paymentGatewayService.getPaymentById(id);
     if (response == null) {
-      throw new com.checkout.payment.gateway.exception.EventProcessingException("Payment not found");
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
     return new ResponseEntity<>(response, HttpStatus.OK);
   }

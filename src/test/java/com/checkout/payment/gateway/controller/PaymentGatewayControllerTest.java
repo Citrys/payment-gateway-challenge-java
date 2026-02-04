@@ -56,8 +56,7 @@ class PaymentGatewayControllerTest {
   @Test
   void whenPaymentWithIdDoesNotExistThen404IsReturned() throws Exception {
     mvc.perform(MockMvcRequestBuilders.get("/v1/payment/" + UUID.randomUUID()))
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.message").value("Page not found"));
+        .andExpect(status().isNotFound());
   }
 
   @Test
