@@ -427,7 +427,7 @@ http://localhost:8090/swagger-ui/index.html
 
 ### Process Payment (Authorized)
 ```bash
-curl -X PUT http://localhost:8090/v1/payment \
+curl -X POST http://localhost:8090/v1/payment \
   -H "Content-Type: application/json" \
   -d '{
     "card_number": "4111111111111111",
