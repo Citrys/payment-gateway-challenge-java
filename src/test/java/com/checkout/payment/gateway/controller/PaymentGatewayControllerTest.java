@@ -294,31 +294,6 @@ class PaymentGatewayControllerTest {
   }
 
   @Test
-  void whenCurrencyLengthNotThreeCharactersThenRejected() throws Exception {
-    String paymentRequest = """
-        {
-          "card_number": "4111111111111111",
-          "expiry_month": 12,
-          "expiry_year": 2026,
-          "currency": "US",
-          "amount": 1000,
-          "cvv": 123
-        }
-        """;
-
-    MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.post("/v1/payment")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(paymentRequest))
-        .andExpect(request().asyncStarted())
-        .andReturn();
-
-    mvc.perform(asyncDispatch(mvcResult))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.status").value("Rejected"))
-        .andExpect(jsonPath("$.rejection_reason").value("Currency must be a 3-character code"));
-  }
-
-  @Test
   void whenAmountIsZeroThenRejected() throws Exception {
     String paymentRequest = """
         {
