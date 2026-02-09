@@ -74,10 +74,6 @@ public class CompositePaymentValidator implements PaymentValidator {
   }
 
   private void validateCurrency(String currency, List<String> errors) {
-    if (currency == null || currency.length() != 3) {
-      errors.add("Currency must be a 3-character code");
-      return;
-    }
     if (!supportedCurrencies.contains(currency.toUpperCase())) {
       errors.add("Currency not supported");
     }
