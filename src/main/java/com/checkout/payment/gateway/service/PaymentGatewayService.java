@@ -2,7 +2,6 @@ package com.checkout.payment.gateway.service;
 
 import com.checkout.payment.gateway.model.Payment;
 import com.checkout.payment.gateway.enums.PaymentStatus;
-import com.checkout.payment.gateway.exception.EventProcessingException;
 import com.checkout.payment.gateway.requests.ApiPaymentRequest;
 import com.checkout.payment.gateway.responces.ApiPaymentResponse;
 import com.checkout.payment.gateway.responces.BankPaymentResponse;
@@ -46,8 +45,7 @@ public class PaymentGatewayService {
   /**
    * Retrieves a payment by ID
    * @param id the payment ID
-   * @return the payment response
-   * @throws EventProcessingException if payment not found
+   * @return the payment response if found, otherwise null (controller should handle 404 Not Found)
    */
   public ApiPaymentResponse getPaymentById(UUID id) {
     LOG.debug("Retrieving payment with ID: {}", id);
