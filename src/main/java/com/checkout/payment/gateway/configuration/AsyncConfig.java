@@ -1,4 +1,4 @@
-package com.checkout.payment.gateway.config;
+package com.checkout.payment.gateway.configuration;
 
 import java.util.concurrent.Executor;
 import org.springframework.context.annotation.Bean;
